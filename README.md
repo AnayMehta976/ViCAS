@@ -1,222 +1,131 @@
 # ViCAS — Visible Light Communication Audio System
 
-> Arduino-based Li-Fi audio transmission system that uses modulated visible light (LED) to wirelessly transmit audio signals decoded by a photodiode receiver.
+> **ViCAS** (Visible Light Communication Audio System) is an Arduino-based Li-Fi system designed for Vehicle-to-Vehicle (V2V) communication. It transmits modulated audio data via visible light (LED), providing a safe, secure, and interference-free alternative to radio-based systems.
 
 ---
 
 ## Table of Contents
-- [Overview](#overview)
+- [Project Vision](#project-vision)
+- [The Problem](#the-problem)
+- [Our Solution: VLC Technology](#our-solution-vlc-technology)
 - [How It Works](#how-it-works)
-- [Repository Structure](#repository-structure)
-- [Sender](#sender)
-- [Receiver](#receiver)
-  - [Receiver Final (Recommended)](#receiver-final-recommended)
-  - [Receiver Low-Level (Experimental)](#receiver-low-level-experimental)
-- [Hardware Requirements](#hardware-requirements)
-- [Pin Configuration](#pin-configuration)
-- [Required Libraries](#required-libraries)
-- [WAV File Setup](#wav-file-setup)
-- [Getting Started](#getting-started)
+- [Hardware & Circuitry](#hardware--circuitry)
+- [Sender Module](#sender-module)
+- [Receiver Module](#receiver-module)
+- [Experiments & Validation](#experiments--validation)
+- [Survey & Real-World Feedback](#survey--real-world-feedback)
+- [Future Scope](#future-scope)
 - [Contributors](#contributors)
 - [License](#license)
 
 ---
 
-## Overview
+## Project Vision
 
-ViCAS (Visible Light Communication Audio System) is a Li-Fi based project that transmits audio wirelessly using modulated light instead of radio waves. A keypad-controlled Arduino sender selects and plays a WAV audio track through an LED. A photodiode on the receiver side picks up the modulated light signal and reconstructs the audio through a speaker.
+Created for the **Bal Vigyan 2023** competition by students of *The Shishukunj International School, Indore*, ViCAS aims to bridge the communication gap between drivers on the road. Whether informing a fellow driver of an open trunk, a flat tire, or a medical emergency, ViCAS provides a clear and immediate voice-based link where traditional methods (honking, hand gestures) fail.
 
-This project demonstrates the core principle of Li-Fi: high-speed data transmission through visible light, applied to audio communication.
+---
+
+## The Problem
+
+- **Communication Gap:** Drivers lack a safe way to convey specific messages (e.g., "Your boot is open", "Medical emergency").
+- **Traffic Safety:** Honking is vague, and hand gestures can be distracting or dangerous in high-traffic areas.
+- **V2V for the Future:** As autonomous vehicles enter the road, a hybrid communication system between human-driven and self-driving cars is essential to prevent pile-ups and accidents.
+
+---
+
+## Our Solution: VLC Technology
+
+ViCAS utilizes **Visible Light Communication (VLC)**, often called Li-Fi. Unlike Wi-Fi which uses radio waves, VLC transmits data by flickering an LED at speeds imperceptible to the human eye.
+
+### Why Visible Light?
+| Wave Type | Direction | Security | Penetration | Why/Why Not? |
+|-----------|-----------|----------|-------------|--------------|
+| **Radio** | Omni | Poor | High | High interference, low bandwidth. |
+| **Microwave** | Uni | Medium | Low | Bulky, expensive, high power draw. |
+| **Infrared** | Uni | High | None | Slow data rate, very short distance. |
+| **Laser** | Uni | Very High | None | Harmful to eyes, creates heat. |
+| **Visible Light** | Uni | **Very High** | None | **Safe, low cost, no interference.** |
 
 ---
 
 ## How It Works
 
-```
-[SD Card WAV] --> [Sender Arduino] --> [LED (modulated light)] 
-                                              |
-                                     (line-of-sight)
-                                              |
-                                      [Photodiode] --> [Receiver Arduino] --> [Speaker]
-```
-
-1. The **Sender** reads a WAV file from an SD card and modulates the brightness of an LED according to the audio signal.
-2. A **photodiode** detects the light fluctuations and passes the signal to the **Receiver** Arduino.
-3. The **Receiver** reconstructs and amplifies the audio signal and plays it through a speaker.
+1. **Input:** The driver selects a message on a **4x4 Keypad** (e.g., Press '1' for "Your trunk is open").
+2. **Transmission:** The Arduino reads the `.wav` file from an SD card and modulates a **Super Bright LED** using binary logic.
+3. **Link:** The light travels through the air to the car in front.
+4. **Reception:** A **Solar Panel** (acting as a high-speed photodetector) on the receiving car picks up the light signal.
+5. **Output:** The signal is converted back to electrical waves, amplified via an **LM386 module**, and played through the car's speakers.
 
 ---
 
-## Repository Structure
+## Hardware & Circuitry
 
-```
-ViCAS/
-├── Sender.ino               # Sender: keypad-triggered WAV transmitter via LED
-├── Receiver_Final.ino       # Receiver: TMRpcm-based WAV playback (recommended)
-├── Receiver_LowLevel.ino    # Receiver: Timer1 interrupt-based audio output (experimental)
-├── LICENSE
-└── README.md
-```
+### Components List
+- **Arduino Uno R3:** The brain of the sending/receiving modules.
+- **4x4 Matrix Keypad:** For message selection.
+- **SD Card Reader Module:** To store audio files.
+- **Super Bright White LED:** Light modulator.
+- **Solar Panel (4V):** High-sensitivity light receiver.
+- **LM386 Audio Amplifier:** For clear audio output.
+- **Micro SD Card (2GB):** Storing 8-bit, 16kHz Mono WAV files.
+
+### Cost Efficiency
+The total prototype cost is approximately **₹1,874 (INR)**, making it a highly feasible solution for mass implementation in countries like India.
 
 ---
 
-## Sender
-
+## Sender Module
 **File:** `Sender.ino`
+- **Pins:** Keypad (9-2), SD CS (10), Speaker/LED out (3).
+- **Messages:** Pre-recorded audio tracks triggered by keypad input.
 
-The sender unit uses a **4x4 matrix keypad** to select which WAV audio track to transmit. The selected track is read from an SD card and played through the TMRpcm library on a speaker pin that also drives the LED modulator.
-
-### Key Features
-- 4x4 keypad input (keys `1`–`6` mapped to audio tracks)
-- TMRpcm library for WAV playback
-- SD card module for audio file storage
-- Speaker/LED output on **Pin 3**
-- Volume control via `tmrpcm.setVolume(6)`
-
-### Keypad Mapping
-
-| Key | Action |
-|-----|--------|
-| `1` | Play `1.wav` |
-| `2` | Play `2.wav` |
-| `3` | Play `3.wav` |
-| `4` | Play `4.wav` |
-| `5` | Play `track5.wav` |
-| `6` | Play `track6.wav` |
-
-### Sender Pin Configuration
-
-| Component | Pin |
-|-----------|-----|
-| SD Card CS | 10 |
-| Speaker / LED out | 3 |
-| Keypad Row Pins | 9, 8, 7, 6 |
-| Keypad Col Pins | 5, 4, 3, 2 |
-| Output | A0 |
+## Receiver Module
+- **Receiver_Final.ino:** Clean TMRpcm-based implementation.
+- **Receiver_LowLevel.ino:** Experimental stereo version using Timer1 interrupts (A0/A1 out).
 
 ---
 
-## Receiver
+## Experiments & Validation
 
-Two receiver implementations are provided — use `Receiver_Final.ino` for standard use.
+### Experiment 1: Range Test
+Tests showed the prototype maintains clear audio transmission up to **10 feet** using standard components. High-powered LEDs and optimized lenses can extend this significantly.
 
-### Receiver Final (Recommended)
-
-**File:** `Receiver_Final.ino`
-
-A clean, production-ready receiver that uses the **TMRpcm** library to play back a WAV file (`test.wav`) stored on an SD card. Audio output is on **Pin 9**.
-
-#### Key Features
-- Uses `TMRpcm` for reliable WAV playback
-- Minimal code footprint
-- Speaker output on **Pin 9**
-- Volume set to 6 by default
-- Plays `test.wav` on startup
-
-#### Receiver Final Pin Configuration
-
-| Component | Pin |
-|-----------|-----|
-| SD Card CS | 10 |
-| Speaker out | 9 |
+### Experiment 2: Unfavorable Conditions
+ViCAS was tested under simulated **Fog, Rain, and Mud** (partial sensor blockage).
+- **Result:** The system remained functional across all conditions, proving its resilience for real-world road environments.
 
 ---
 
-### Receiver Low-Level (Experimental)
+## Survey & Real-World Feedback
 
-**File:** `Receiver_LowLevel.ino`
-
-A lower-level implementation using **Timer1 hardware interrupts** to manually schedule audio sample output at a fixed sample rate (8000 Hz). Outputs stereo audio to two separate analog pins.
-
-#### Key Features
-- Manual `Timer1` ISR for precise sample timing
-- Sample rate: **8000 Hz**
-- Frame buffer: **512 samples**
-- Stereo output on **A0 (left)** and **A1 (right)**
-- Reads WAV file from SD card (`test.wav`)
-
-#### Receiver LowLevel Pin Configuration
-
-| Component | Pin |
-|-----------|-----|
-| SD Card CS | 10 |
-| Left Audio out | A0 |
-| Right Audio out | A1 |
+We conducted a survey at the **Integrated Command and Control Centre (AICTSL)** with **Mr. Roshan Agrawal** (Director, Chartered Speed).
+- **Current State:** Bus drivers have no way to communicate other than stopping or using expensive/inefficient walkie-talkies.
+- **Feedback:** "This project gives us a new and efficient way of communication... it has a very broad scope and should be implemented at a national level."
 
 ---
 
-## Hardware Requirements
+## Future Scope
 
-### Sender Unit
-- Arduino Uno / Nano
-- 4x4 Matrix Keypad
-- SD Card Module
-- High-brightness LED (for light modulation)
-- Resistors (current limiting for LED)
-- MicroSD card with WAV files
-
-### Receiver Unit
-- Arduino Uno / Nano
-- SD Card Module
-- Photodiode or phototransistor (to detect modulated light)
-- Small speaker or buzzer
-- Amplifier circuit (optional, for better audio)
-- MicroSD card with `test.wav`
-
----
-
-## Required Libraries
-
-Install the following libraries via Arduino Library Manager (`Sketch > Include Library > Manage Libraries`):
-
-| Library | Purpose |
-|---------|------|
-| `TMRpcm` | WAV audio playback via Timer |
-| `SD` | SD card read/write |
-| `SPI` | SPI communication for SD module |
-| `Keypad` | 4x4 matrix keypad input (Sender only) |
-| `TimerOne` | Hardware Timer1 interrupts (LowLevel Receiver only) |
-
----
-
-## WAV File Setup
-
-1. Format your SD card as **FAT32**.
-2. Copy your WAV audio files to the **root** of the SD card.
-3. Ensure files are named exactly as referenced in code:
-   - Sender: `1.wav`, `2.wav`, `3.wav`, `4.wav`, `track5.wav`, `track6.wav`
-   - Receiver: `test.wav`
-4. WAV files must be **8-bit, 8000–16000 Hz, mono** for best TMRpcm compatibility.
-
----
-
-## Getting Started
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/AnayMehta976/ViCAS.git
-   ```
-
-2. **Install required libraries** (see [Required Libraries](#required-libraries)).
-
-3. **Prepare SD cards** with appropriate WAV files.
-
-4. **Upload `Sender.ino`** to the Sender Arduino and wire as per [Sender Pin Configuration](#sender-pin-configuration).
-
-5. **Upload `Receiver_Final.ino`** to the Receiver Arduino and wire as per [Receiver Final Pin Configuration](#receiver-final-pin-configuration).
-
-6. **Power both units**, aim the LED at the photodiode, press a key on the sender keypad, and hear audio on the receiver speaker.
+- **Bi-Directional Link:** Lights/sensors on both front and back of cars.
+- **ADAS Integration:** Incorporating ViCAS into Advanced Driver Assistance Systems.
+- **Accessibility:** Adding visual screens for deaf drivers to read incoming messages instead of hearing them.
+- **Smart Infrastructure:** Converting streetlights into "smart poles" that communicate with vehicles.
 
 ---
 
 ## Contributors
 
-| Name | GitHub |
-|------|--------|
-| Anay Mehta | [@AnayMehta976](https://github.com/AnayMehta976) |
-| Yuvraj Nikum | [@yuvranikum](https://github.com/yuvranikum) |
+- **Palak Maheshwari**
+- **Kenisha Vaidya**
+- **Yuvraj Nikum** ([@yuvranikum](https://github.com/yuvranikum))
+- **Akarsha Garg**
+- **Anay Mehta** ([@AnayMehta976](https://github.com/AnayMehta976))
+
+**Supervisors:** Mr. Rakesh Soni, Mr. Utkarsh Deshpande.
+*The Shishukunj International School, Indore.*
 
 ---
 
 ## License
-
 This project is licensed under the [MIT License](LICENSE).
