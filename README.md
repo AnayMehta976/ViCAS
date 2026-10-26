@@ -12,6 +12,8 @@
 - [Hardware & Circuitry](#hardware--circuitry)
 - [Sender Module](#sender-module)
 - [Receiver Module](#receiver-module)
+- [Digital Li-Fi Messaging](#digital-li-fi-messaging)
+- [Repository Contents](#repository-contents)
 - [Experiments & Validation](#experiments--validation)
 - [Survey & Real-World Feedback](#survey--real-world-feedback)
 - [Future Scope](#future-scope)
@@ -83,6 +85,47 @@ The total prototype cost is approximately **₹1,874 (INR)**, making it a highly
 ## Receiver Module
 - **Receiver_Final.ino:** Clean TMRpcm-based implementation.
 - **Receiver_LowLevel.ino:** Experimental stereo version using Timer1 interrupts (A0/A1 out).
+
+---
+
+## Digital Li-Fi Messaging
+**Files:** `lifi_sender/lifi_sender.ino`, `lifi_receiver/lifi_receiver.ino`
+
+Alongside the audio link, ViCAS can send a keypad key as **digital data over light**. The receiving Arduino decodes it and prints the exact key it received, which makes the link easy to test and opens the way to on-screen messages for deaf drivers.
+
+**Frame format** (UART-style, sent with light):
+
+| Part | Light | Length |
+|------|-------|--------|
+| Idle | ON | until a key is pressed |
+| Start bit | OFF | 1 bit |
+| Data | ON = 1, OFF = 0 | 8 bits, least significant bit first |
+| Stop bit + gap | ON | 2 bits |
+
+Each bit lasts `BIT_MS` = 10 ms, so one key takes about 110 ms. `BIT_MS` must be the same in both sketches.
+
+**Sender wiring:** keypad rows on pins 2–5, columns on pins 6–9, and the LED (through a resistor) or a transistor driving a headlight on pin 10.
+
+**Receiver wiring:** solar panel, LDR or photodiode on **A0**. The status LED on pin 13 blinks for every key received, and each key is printed to the Serial Monitor at 9600 baud.
+
+**Receiver calibration:**
+1. Set `CALIBRATE = true`, upload, and open the Serial Monitor at 9600 baud.
+2. Note the reading with the sender light ON and with it OFF.
+3. Set `THRESHOLD` halfway between the two, set `CALIBRATE = false`, and upload again.
+
+If keys arrive garbled, raise `BIT_MS` to 20–30 ms on **both** boards. The receiver checks the start bit twice to ignore flicker, and reports a frame error if the light is blocked mid-character.
+
+---
+
+## Repository Contents
+
+| File | What it does |
+|------|--------------|
+| `Sender.ino` | Plays a pre-recorded WAV from the SD card through the LED when a keypad key is pressed (audio link). |
+| `Receiver_Final.ino` | TMRpcm-based WAV playback on pin 9. |
+| `Receiver_LowLevel.ino` | Experimental Timer1 interrupt-based stereo output on A0/A1. |
+| `lifi_sender/lifi_sender.ino` | Sends keypad keys as digital light pulses (digital link). |
+| `lifi_receiver/lifi_receiver.ino` | Decodes those pulses from a solar panel or LDR and prints each key. |
 
 ---
 
