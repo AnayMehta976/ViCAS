@@ -6,6 +6,8 @@ ViCAS is an Arduino-based Li-Fi system for vehicle-to-vehicle (V2V) communicatio
 
 Designed and built by **Anay Mehta** for the Computer Science category of **Bal Vigyan 2023**, The Shishukunj International School, Indore.
 
+**Website:** [vicas-omega.vercel.app](https://vicas-omega.vercel.app). Try the keypad: press a key to see its light frame and hear the message.
+
 ---
 
 ## Contents
@@ -121,6 +123,7 @@ Each sketch is in its own folder so it opens directly in the Arduino IDE.
 | [`audio_test/`](audio_test/audio_test.ino) | Plays `TEST.WAV` to check the SD card, amplifier and speaker before testing the light link. |
 | [`lifi_sender/`](lifi_sender/lifi_sender.ino) | **Digital sender.** Sends the pressed key as light pulses. |
 | [`lifi_receiver/`](lifi_receiver/lifi_receiver.ino) | **Digital receiver.** Decodes the pulses from the solar panel and prints the key. |
+| [`site/`](site/) | The project website, a static page deployed on Vercel. |
 
 All four compile for an Arduino Uno without warnings.
 
