@@ -5,317 +5,355 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ViCAS: car-to-car voice messages, carried by light</title>
 <meta name="description" content="ViCAS lets a driver send a spoken warning to the car ahead through an LED and a solar panel. An Arduino Li-Fi project by Anay Mehta, winner of the City Robotics Science Fair.">
-<meta name="theme-color" content="#1a1a1a">
+<meta name="theme-color" content="#04060c">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="fonts/libre-franklin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/source-serif-4.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/chakra-petch-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/manrope.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 <script>document.documentElement.classList.add('js')</script>
 </head>
 <body>
 <a class="skip" href="#keypad">Skip to the keypad</a>
 
-<!-- ============ HERO: light ON above the seam, light OFF below ============ -->
-<header class="hero" id="top">
-  <div class="hero__bar">
-    <a class="wordmark" href="#top" aria-label="ViCAS, back to top">ViCAS</a>
-    <a class="btn" href="#keypad">Try the keypad</a>
-  </div>
-  <h1 class="hero__title">
-    <span class="hero__copy hero__copy--on">
-      <span class="line"><span data-line style="--i:0">Say it</span></span>
-      <span class="line"><span data-line style="--i:1">with light</span></span>
-    </span>
-    <span class="hero__copy hero__copy--off" aria-hidden="true">
-      <span class="line"><span data-line style="--i:0">Say it</span></span>
-      <span class="line"><span data-line style="--i:1">with light</span></span>
-    </span>
-  </h1>
-  <p class="hero__lede" data-fade>ViCAS lets a driver send a spoken warning to the car ahead, flashed from an LED and heard through a solar panel. Winner of the City Robotics Science Fair.</p>
+<!-- ================= NAV ================= -->
+<header class="nav" data-nav>
+  <a class="nav__logo" href="#top" aria-label="ViCAS, back to top"><span class="nav__led" aria-hidden="true"></span>ViCAS</a>
+  <nav aria-label="Sections">
+    <ul class="nav__links">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#keypad">Keypad</a></li>
+      <li><a href="#tests">Tests</a></li>
+      <li><a href="#win">Recognition</a></li>
+    </ul>
+  </nav>
+  <a class="btn btn--sm" href="https://github.com/AnayMehta976/ViCAS">GitHub</a>
+  <div class="nav__progress" aria-hidden="true"><i data-progress></i></div>
 </header>
 
 <main>
 
-<!-- ============ THE PROBLEM: staircase statement on tail-light red ============ -->
-<section class="chapter problem" id="problem" aria-labelledby="problem-h">
-  <h2 class="problem__h" id="problem-h">A horn can’t say what’s wrong</h2>
-  <p class="stair" data-stagger>
-    <span>Your horn can only say look at me.</span>
-    <span>It can’t tell the car ahead</span>
-    <span>that its boot is open.</span>
-  </p>
-  <div class="problem__figs">
-    <figure data-reveal>
-      <img src="img/aictsl-centre.webp" width="580" height="387" alt="An official of Indore’s AICTSL bus control centre at his desk, under a map of Madhya Pradesh" loading="lazy">
-      <figcaption>The AICTSL bus control centre, Indore.</figcaption>
-    </figure>
-    <figure data-reveal>
-      <img src="img/aictsl-desk.webp" width="540" height="360" alt="The ViCAS LED, lit, pointed across a desk during the demonstration, with its wires and the laptop beside it" loading="lazy">
-      <figcaption>The LED lit for the demonstration.</figcaption>
-    </figure>
+<!-- ================= HERO: driving up to the car ahead at night ================= -->
+<section class="hero" id="top" data-hero>
+  <canvas class="hero__road" data-road aria-hidden="true"></canvas>
+  <div class="car" data-car aria-hidden="true">
+    <svg viewBox="0 0 420 300">
+      <defs>
+        <radialGradient id="tl" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#ffd0d3"/><stop offset=".35" stop-color="#ff3d48"/><stop offset="1" stop-color="#7a0910"/></radialGradient>
+        <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3346"/><stop offset="1" stop-color="#121826"/></linearGradient>
+        <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2740"/><stop offset="1" stop-color="#0b1220"/></linearGradient>
+        <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="9"/></filter>
+      </defs>
+      <path d="M58 160 Q64 96 120 72 L300 72 Q356 96 362 160 L376 196 Q380 236 356 244 L64 244 Q40 236 44 196 Z" fill="url(#body)"/>
+      <path d="M118 84 L302 84 Q336 104 340 150 L80 150 Q84 104 118 84 Z" fill="url(#glass)"/>
+      <g data-panel>
+        <rect x="150" y="98" width="120" height="44" rx="3" fill="#0d1d3c" stroke="#5ce1ff" stroke-opacity=".5"/>
+        <g stroke="#3d6fb3" stroke-width="1.2"><path d="M180 98v44M210 98v44M240 98v44M150 120h120"/></g>
+        <rect class="car__hit" data-car-hit x="150" y="98" width="120" height="44" rx="3" fill="#5ce1ff" opacity="0"/>
+      </g>
+      <g class="car__tails">
+        <ellipse cx="86" cy="186" rx="34" ry="16" fill="#ff3d48" filter="url(#glow)" opacity=".85"/>
+        <ellipse cx="334" cy="186" rx="34" ry="16" fill="#ff3d48" filter="url(#glow)" opacity=".85"/>
+        <path d="M56 176 h56 q8 0 8 8 v6 q0 8 -8 8 h-56 z" fill="url(#tl)"/>
+        <path d="M364 176 h-56 q-8 0 -8 8 v6 q0 8 8 8 h56 z" fill="url(#tl)"/>
+      </g>
+      <rect x="168" y="186" width="84" height="28" rx="4" fill="#e9eef8"/>
+      <text x="210" y="206" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-weight="700" font-size="17" fill="#0b1220">VICAS</text>
+      <rect x="52" y="226" width="316" height="14" rx="7" fill="#0a0e17"/>
+      <rect x="70" y="244" width="58" height="30" rx="6" fill="#05070c"/>
+      <rect x="292" y="244" width="58" height="30" rx="6" fill="#05070c"/>
+    </svg>
   </div>
-  <p class="problem__note" data-reveal>City bus drivers have no direct way to talk to each other on the road. To pass on a warning they stop the bus, or call the control centre and wait.</p>
-</section>
 
-<!-- ============ HOW IT WORKS: accordion, dark to light like the signal leaving the car ============ -->
-<section class="chapter how" id="how" aria-labelledby="how-h">
-  <div class="how__intro">
-    <h2 id="how-h" data-reveal>From key to voice</h2>
-    <p data-reveal>Press a key and an Arduino plays that message from an SD card into a white LED, whose brightness follows the voice far too fast to see. On the car ahead, a solar panel turns the flicker back into sound.</p>
-  </div>
-  <div class="acc" data-acc>
-    <article class="acc__panel is-open" style="--tone:#3a2b04;--tone-ink:#e6e0d2">
-      <h3><button class="acc__btn" aria-expanded="true" aria-controls="acc-1" id="acc-b1"><span>Keypad</span></button></h3>
-      <div class="acc__body" id="acc-1" role="region" aria-labelledby="acc-b1">
-        <p>The driver presses one key. Key 1 says “Your trunk is open”, 2 “There is a medical emergency”, 3 “Your fuel is low” and 4 “Someone is in danger”. Keys 5 to 9 hold messages you record yourself.</p>
-        <div class="acc__pic acc__pic--draw"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-keypad"/></svg></div>
-      </div>
-    </article>
-    <article class="acc__panel" style="--tone:#6b5008;--tone-ink:#e6e0d2">
-      <h3><button class="acc__btn" aria-expanded="false" aria-controls="acc-2" id="acc-b2"><span>Arduino and SD card</span></button></h3>
-      <div class="acc__body" id="acc-2" role="region" aria-labelledby="acc-b2">
-        <p>An Arduino Uno finds that key’s recording on a micro SD card, an 8-bit 16 kHz WAV file, and plays it on pin 9 with the TMRpcm library.</p>
-        <div class="acc__pic"><img src="img/sketch-sender.webp" width="1250" height="850" alt="Hand-drawn circuit: Arduino Uno wired to a micro SD card module, an amplifier and an LED" loading="lazy"></div>
-      </div>
-    </article>
-    <article class="acc__panel" style="--tone:#b88d12;--tone-ink:#1a1a1a">
-      <h3><button class="acc__btn" aria-expanded="false" aria-controls="acc-3" id="acc-b3"><span>White LED</span></button></h3>
-      <div class="acc__body" id="acc-3" role="region" aria-labelledby="acc-b3">
-        <p>Through an amplifier, the audio drives a super-bright white LED. Its brightness rises and falls with the voice thousands of times a second, so the eye sees steady light.</p>
-        <div class="acc__pic acc__pic--draw"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-led"/></svg></div>
-      </div>
-    </article>
-    <article class="acc__panel" style="--tone:#d7a414;--tone-ink:#1a1a1a">
-      <h3><button class="acc__btn" aria-expanded="false" aria-controls="acc-4" id="acc-b4"><span>Solar panel</span></button></h3>
-      <div class="acc__body" id="acc-4" role="region" aria-labelledby="acc-b4">
-        <p>On the car ahead, solar panels act as the ear. Their voltage follows the light falling on them, which rebuilds the audio signal.</p>
-        <div class="acc__pic"><img src="img/sketch-receiver.webp" width="1400" height="1050" alt="Hand-drawn circuit: a solar panel wired to a 3.5 mm jack that feeds the amplifier" loading="lazy"></div>
-      </div>
-    </article>
-    <article class="acc__panel" style="--tone:#f2c21a;--tone-ink:#1a1a1a">
-      <h3><button class="acc__btn" aria-expanded="false" aria-controls="acc-5" id="acc-b5"><span>Amplifier and speaker</span></button></h3>
-      <div class="acc__body" id="acc-5" role="region" aria-labelledby="acc-b5">
-        <p>An LM386 amplifier lifts that signal through a 3.5 mm jack and the message plays from the speaker. The receiving car needs no microcontroller at all.</p>
-        <div class="acc__pic acc__pic--draw"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-jack"/></svg></div>
-      </div>
-    </article>
-  </div>
-</section>
-
-<!-- ============ THE LIVE KEYPAD: night black ============ -->
-<section class="chapter stage stage--night" id="keypad" aria-labelledby="keypad-h" data-chapter>
-  <h2 class="stage__title" id="keypad-h">Press a key</h2>
-  <div class="stage__portrait device" data-device>
-    <div class="device__led" data-led aria-hidden="true"><svg viewBox="0 0 120 150"><path class="dome" d="M30 92 V52 a30 30 0 0 1 60 0 V92 Z"/><rect class="rim" x="22" y="90" width="76" height="12" rx="3"/><rect class="leg" x="46" y="102" width="6" height="46"/><rect class="leg" x="68" y="102" width="6" height="36"/></svg></div>
-    <div class="keys" role="group" aria-label="ViCAS keypad">
-      <button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button><button class="key key--alt" data-key="A">A</button>
-      <button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button><button class="key key--alt" data-key="B">B</button>
-      <button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button><button class="key key--alt" data-key="C">C</button>
-      <button class="key key--alt" data-key="*">*</button><button class="key" data-key="0">0</button><button class="key key--alt" data-key="#">#</button><button class="key key--alt" data-key="D">D</button>
+  <div class="hero__copy" data-hero-copy>
+    <p class="badge" data-hero-in><span class="badge__dot"></span>Winner, City Robotics Science Fair</p>
+    <h1 class="hero__title">
+      <span class="mask"><span data-hero-line>Say it</span></span>
+      <span class="mask"><span data-hero-line class="glow-text">with light.</span></span>
+    </h1>
+    <p class="hero__lede" data-hero-in>ViCAS lets a driver send a spoken warning to the car ahead. An LED flickers too fast to see, and a solar panel on the other car turns that light back into a voice.</p>
+    <div class="hero__actions" data-hero-in>
+      <a class="btn" href="#keypad">Try the keypad</a>
+      <a class="btn btn--ghost" href="#how">How it works</a>
     </div>
   </div>
-  <div class="stage__links">
-    <button class="textbtn" data-mute aria-pressed="false">Sound on</button>
-    <a class="textlink" href="https://github.com/AnayMehta976/ViCAS/blob/main/sender/sender.ino">Read the sender code</a>
+  <div class="hero__hud" aria-hidden="true">
+    <span>LED <b data-hud-led>ON</b></span>
+    <span>Range <b>10 ft</b></span>
+    <span class="hero__scroll">Scroll to drive closer</span>
   </div>
-  <p class="stage__text" data-readout aria-live="polite">Key 1 sends “Your trunk is open.” Press it and the LED flashes the message while your speaker says it aloud.</p>
 </section>
 
-<!-- ============ THE SAME KEY AS DATA: hazard amber ============ -->
-<section class="chapter stage stage--amber" id="data" aria-labelledby="data-h" data-chapter>
-  <h2 class="stage__title" id="data-h">The key as data</h2>
-  <div class="stage__portrait frame" data-frame aria-hidden="true"><div class="frame__bit" data-v="0"><span>Start</span><span>Light off</span></div><div class="frame__bit" data-v="1"><span>Data bit 0</span><span>Light on</span></div><div class="frame__bit" data-v="0"><span>Data bit 1</span><span>Light off</span></div><div class="frame__bit" data-v="0"><span>Data bit 2</span><span>Light off</span></div><div class="frame__bit" data-v="0"><span>Data bit 3</span><span>Light off</span></div><div class="frame__bit" data-v="1"><span>Data bit 4</span><span>Light on</span></div><div class="frame__bit" data-v="1"><span>Data bit 5</span><span>Light on</span></div><div class="frame__bit" data-v="0"><span>Data bit 6</span><span>Light off</span></div><div class="frame__bit" data-v="0"><span>Data bit 7</span><span>Light off</span></div><div class="frame__bit" data-v="1"><span>Stop</span><span>Light on</span></div><div class="frame__bit" data-v="1"><span>Gap</span><span>Light on</span></div></div>
-
-  <div class="stage__links">
-    <a class="textlink" href="https://github.com/AnayMehta976/ViCAS/blob/main/lifi_receiver/lifi_receiver.ino">Read the Li-Fi code</a>
-  </div>
-  <p class="stage__text" data-frame-text>In digital mode the key itself travels as eleven flashes: one dark start bit, eight data bits and a lit stop. At 10 ms a bit, key 1 arrives in 110 ms and the receiving Arduino prints it.</p>
-</section>
-
-<!-- ============ WHY LIGHT: specimens on colour tiles ============ -->
-<section class="chapter why" id="why" aria-labelledby="why-h">
-  <div class="why__head">
-    <h2 id="why-h" data-reveal>Why light, not radio</h2>
-    <p data-reveal>Radio and Wi-Fi reach everyone around you. Light reaches only the car you point it at, and every part of it is cheap to buy.</p>
-  </div>
-  <ul class="tiles">
-    <li class="tile" data-reveal><div class="tile__face" style="--f:var(--red)"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-led"/></svg></div><h3>Line of sight</h3><p>The beam reaches the car it is aimed at, not the whole street, so a message is hard to overhear.</p></li>
-    <li class="tile tile--wide" data-reveal><div class="tile__face" style="--f:var(--yellow)"><svg viewBox="0 0 480 300" aria-hidden="true"><use href="#d-arduino"/></svg></div><h3>₹1,874 in parts</h3><p>An Arduino Uno, a keypad, an SD card, an LED, four solar panels and an LM386 amplifier.</p></li>
-    <li class="tile" data-reveal><div class="tile__face" style="--f:var(--green)"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-solar"/></svg></div><h3>No licence, no radio</h3><p>Visible light needs no spectrum licence and adds nothing to the crowded radio bands.</p></li>
-    <li class="tile" data-reveal><div class="tile__face" style="--f:var(--yellow)"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-taillight"/></svg></div><h3>Already on every car</h3><p>Cars carry LED lights at both ends, so the transmitter could be the lights they already have.</p></li>
-    <li class="tile" data-reveal><div class="tile__face" style="--f:var(--red)"><svg viewBox="0 0 240 300" aria-hidden="true"><use href="#d-jack"/></svg></div><h3>Plays through the car</h3><p>The receiver ends in a 3.5 mm jack, the same plug as a car stereo’s AUX input.</p></li>
-  </ul>
-</section>
-
-<!-- ============ RECOGNITION: names running off the edges ============ -->
-<section class="band-wrap" id="recognition" aria-labelledby="rec-h">
-  <h2 class="band-h" id="rec-h">Recognition</h2>
-  <div class="band" aria-hidden="true">
-    <div class="band__track">
-      <span>Winner, City Robotics Science Fair</span><i></i><span>Bal Vigyan 2023</span><i></i><span>Shown at AICTSL, Indore</span><i></i><span>Tested in fog, rain and mud</span><i></i>
-      <span>Winner, City Robotics Science Fair</span><i></i><span>Bal Vigyan 2023</span><i></i><span>Shown at AICTSL, Indore</span><i></i><span>Tested in fog, rain and mud</span><i></i>
+<!-- ================= PROBLEM ================= -->
+<section class="problem section" id="problem">
+  <div class="wrap problem__grid">
+    <div class="problem__text">
+      <h2 class="h2">A horn can only say <em>look at me.</em></h2>
+      <div class="cant" data-cant>
+        <p class="cant__lead">It can’t say</p>
+        <div class="cant__stack">
+          <span class="cant__word" data-word>“Your boot is open.”</span>
+          <span class="cant__word" data-word>“Your luggage is slipping.”</span>
+          <span class="cant__word" data-word>“Someone needs a hospital.”</span>
+          <span class="cant__word" data-word>“Your fuel is low.”</span>
+        </div>
+      </div>
+      <p class="body" data-rise>Stopping to signal is dangerous, and hand gestures get missed. At Indore’s city bus control centre I was told drivers have no direct way to warn each other: they stop the bus, or call the centre and wait.</p>
     </div>
-  </div>
-  <p class="band__note" data-reveal>ViCAS won the City Robotics Science Fair, was entered in the Computer Science category of Bal Vigyan 2023, and was demonstrated to Indore’s city bus control centre.</p>
-</section>
-
-<!-- ============ TESTS: tabs by condition, bands by distance ============ -->
-<section class="chapter tests" id="tests" aria-labelledby="tests-h">
-  <div class="tests__head">
-    <h2 id="tests-h" data-reveal><span class="soft">Ten feet,</span> in any weather</h2>
-    <a class="btn" href="https://github.com/AnayMehta976/ViCAS#experiments" data-reveal>Read the method</a>
-  </div>
-  <div class="tests__body" data-tests>
-    <div class="tabs" role="tablist" aria-label="Test condition">
-      <button role="tab" id="t-clear" aria-controls="p-clear" aria-selected="true" class="tab"><b>Clear air</b><span>Experiment 1</span></button>
-      <button role="tab" id="t-fog" aria-controls="p-fog" aria-selected="false" tabindex="-1" class="tab"><b>Fog</b><span>Steam in the beam</span></button>
-      <button role="tab" id="t-rain" aria-controls="p-rain" aria-selected="false" tabindex="-1" class="tab"><b>Rain</b><span>Water sprayed</span></button>
-      <button role="tab" id="t-mud" aria-controls="p-mud" aria-selected="false" tabindex="-1" class="tab"><b>Mud</b><span>Paint on the panel</span></button>
-    </div>
-    <figure class="tests__fig" data-reveal>
-      <img src="img/test-beam.webp" width="526" height="720" alt="The range test: the ViCAS LED shining down a desk beside a metre rule towards the receiver" loading="lazy">
-      <figcaption>The range test, stepping back along a metre rule.</figcaption>
-    </figure>
-    <div class="panels">
-      <ol class="runs" role="tabpanel" id="p-clear" aria-labelledby="t-clear">
-        <li><span class="d">0 ft</span><span class="t"><b>Message played</b><small>LED held right at the panel</small></span><span class="r">Pass</span></li>
-        <li><span class="d">2 ft</span><span class="t"><b>Message played</b><small>Clear speech from the speaker</small></span><span class="r">Pass</span></li>
-        <li><span class="d">5 ft</span><span class="t"><b>Message played</b><small>Stepped back along a metre rule</small></span><span class="r">Pass</span></li>
-        <li><span class="d">7 ft</span><span class="t"><b>Message played</b><small>Still clear</small></span><span class="r">Pass</span></li>
-        <li><span class="d">10 ft</span><span class="t"><b>Message played</b><small>The furthest point tested</small></span><span class="r">Pass</span></li>
-      </ol>
-      <ol class="runs" role="tabpanel" id="p-fog" aria-labelledby="t-fog" hidden>
-        <li><span class="d">0 ft</span><span class="t"><b>Message played</b><small>Steam blown between LED and panel</small></span><span class="r">Pass</span></li>
-        <li><span class="d">2 ft</span><span class="t"><b>Message played</b><small>Through the steam</small></span><span class="r">Pass</span></li>
-        <li><span class="d">5 ft</span><span class="t"><b>Message played</b><small>Through the steam</small></span><span class="r">Pass</span></li>
-        <li><span class="d">7 ft</span><span class="t"><b>Message played</b><small>Through the steam</small></span><span class="r">Pass</span></li>
-        <li><span class="d">10 ft</span><span class="t"><b>Message played</b><small>The furthest point tested</small></span><span class="r">Pass</span></li>
-      </ol>
-      <ol class="runs" role="tabpanel" id="p-rain" aria-labelledby="t-rain" hidden>
-        <li><span class="d">0 ft</span><span class="t"><b>Message played</b><small>Water sprinkled into the beam</small></span><span class="r">Pass</span></li>
-        <li><span class="d">2 ft</span><span class="t"><b>Message played</b><small>Through falling water</small></span><span class="r">Pass</span></li>
-        <li><span class="d">5 ft</span><span class="t"><b>Message played</b><small>Through falling water</small></span><span class="r">Pass</span></li>
-        <li><span class="d">7 ft</span><span class="t"><b>Message played</b><small>Through falling water</small></span><span class="r">Pass</span></li>
-        <li><span class="d">10 ft</span><span class="t"><b>Message played</b><small>The furthest point tested</small></span><span class="r">Pass</span></li>
-      </ol>
-      <ol class="runs" role="tabpanel" id="p-mud" aria-labelledby="t-mud" hidden>
-        <li><span class="d">0 ft</span><span class="t"><b>Message played</b><small>Brown paint sprayed over part of the panel</small></span><span class="r">Pass</span></li>
-        <li><span class="d">2 ft</span><span class="t"><b>Message played</b><small>Panel partly covered</small></span><span class="r">Pass</span></li>
-        <li><span class="d">5 ft</span><span class="t"><b>Message played</b><small>Panel partly covered</small></span><span class="r">Pass</span></li>
-        <li><span class="d">7 ft</span><span class="t"><b>Message played</b><small>Panel partly covered</small></span><span class="r">Pass</span></li>
-        <li><span class="d">10 ft</span><span class="t"><b>Message played</b><small>The furthest point tested</small></span><span class="r">Pass</span></li>
-      </ol>
+    <div class="problem__photos">
+      <figure class="photo photo--a" data-parallax="-60"><img src="img/aictsl-centre.webp" width="580" height="387" alt="An official at Indore’s AICTSL bus control centre, under a map of Madhya Pradesh" loading="lazy"><figcaption>AICTSL bus control centre, Indore</figcaption></figure>
+      <figure class="photo photo--b" data-parallax="40"><img src="img/aictsl-desk.webp" width="540" height="360" alt="The ViCAS LED lit on a desk during the demonstration, its wires beside a laptop" loading="lazy"><figcaption>The LED lit for the demonstration</figcaption></figure>
     </div>
   </div>
 </section>
 
-<!-- ============ ABOUT: inset panel, LED-dome portrait ============ -->
-<section class="about-wrap" id="about" aria-labelledby="about-h">
-  <div class="about">
-    <h2 id="about-h" data-reveal>Designed and built by Anay Mehta</h2>
-    <figure class="about__fig">
-      <img src="img/test-speaker.webp" width="620" height="520" alt="The ViCAS receiver speaker, held on a desk, playing a message during testing" loading="lazy">
-    </figure>
-    <div class="about__text">
-      <div data-reveal>
-        <h3>Heard at the bus control centre</h3>
-        <p>At AICTSL in Indore, the director of Chartered Speed called ViCAS “a completely new concept” and said he wants it in his buses once it works both ways.</p>
-      </div>
-      <div data-reveal>
-        <h3>What comes next</h3>
-        <p>A light and a sensor at both ends of every car, so the car behind can answer; headlights as the transmitter; and a screen that shows each message for deaf drivers.</p>
-      </div>
-      <a class="btn" href="https://github.com/AnayMehta976/ViCAS" data-reveal>View the code on GitHub</a>
+<!-- ================= HOW IT WORKS: a pulse travels the circuit ================= -->
+<section class="how" id="how" data-how>
+  <div class="how__pin" data-how-pin>
+    <div class="wrap how__head">
+      <h2 class="h2">From key <em>to voice.</em></h2>
+      <p class="body">Five parts, one beam of light. Scroll and follow the signal.</p>
     </div>
+    <div class="how__viewport">
+      <div class="how__track" data-how-track>
+        <div class="wire" aria-hidden="true"><i data-wire></i></div>
+        <article class="stage" data-stage>
+          <span class="stage__n">Key</span>
+          <div class="stage__art"><svg viewBox="0 0 200 220" aria-hidden="true"><use href="#d-keypad"/></svg></div>
+          <h3>Press a key</h3>
+          <p>Nine keys, nine messages. Key 1 is “Your trunk is open”, 2 “There is a medical emergency”, 3 “Your fuel is low”, 4 “Someone is in danger”.</p>
+        </article>
+        <article class="stage" data-stage>
+          <span class="stage__n">Brain</span>
+          <div class="stage__art stage__art--photo"><img src="img/sketch-sender.webp" width="1250" height="850" alt="Hand-drawn circuit: Arduino Uno wired to a micro SD card, an amplifier and an LED" loading="lazy"></div>
+          <h3>Arduino reads the SD card</h3>
+          <p>An Arduino Uno finds that key’s recording, an 8-bit 16 kHz WAV file, and plays it on pin 9 with the TMRpcm library.</p>
+        </article>
+        <article class="stage" data-stage>
+          <span class="stage__n">Light</span>
+          <div class="stage__art"><svg viewBox="0 0 200 220" aria-hidden="true"><use href="#d-led"/></svg></div>
+          <h3>The LED carries the voice</h3>
+          <p>Through an amplifier, the audio drives a super-bright white LED. Its brightness follows the voice thousands of times a second, so the eye sees steady light.</p>
+        </article>
+        <article class="stage" data-stage>
+          <span class="stage__n">Ear</span>
+          <div class="stage__art stage__art--photo"><img src="img/sketch-receiver.webp" width="1400" height="1050" alt="Hand-drawn circuit: a solar panel wired to a 3.5 mm jack that feeds the amplifier" loading="lazy"></div>
+          <h3>A solar panel listens</h3>
+          <p>On the car ahead, solar panels turn the flicker back into a voltage that follows the light, which rebuilds the audio signal.</p>
+        </article>
+        <article class="stage" data-stage>
+          <span class="stage__n">Voice</span>
+          <div class="stage__art stage__art--photo"><img src="img/test-speaker.webp" width="620" height="520" alt="The ViCAS receiver speaker on a desk during testing" loading="lazy"></div>
+          <h3>The speaker says it</h3>
+          <p>An LM386 amplifier lifts the signal through a 3.5 mm jack and the message plays. The receiving car needs no microcontroller.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LIVE KEYPAD ================= -->
+<section class="lab section" id="keypad">
+  <div class="wrap">
+    <div class="lab__head">
+      <h2 class="h2">Press a key. <em>Hear it arrive.</em></h2>
+      <p class="body">This is the ViCAS keypad. Press a key and watch its message leave the LED as light, cross the gap and come out of the speaker on the other side.</p>
+    </div>
+    <div class="lab__rig">
+      <div class="rig__sender">
+        <div class="rig__led" data-led aria-hidden="true">
+          <svg viewBox="0 0 120 150"><path class="dome" d="M30 92 V52 a30 30 0 0 1 60 0 V92 Z"/><rect class="rim" x="22" y="90" width="76" height="12" rx="3"/><rect class="leg" x="46" y="102" width="6" height="46"/><rect class="leg" x="68" y="102" width="6" height="36"/></svg>
+        </div>
+        <div class="keys" role="group" aria-label="ViCAS keypad">
+          <button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button><button class="key key--alt" data-key="A">A</button>
+          <button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button><button class="key key--alt" data-key="B">B</button>
+          <button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button><button class="key key--alt" data-key="C">C</button>
+          <button class="key key--alt" data-key="*">*</button><button class="key" data-key="0">0</button><button class="key key--alt" data-key="#">#</button><button class="key key--alt" data-key="D">D</button>
+        </div>
+      </div>
+      <canvas class="rig__beam" data-beam aria-hidden="true"></canvas>
+      <div class="rig__receiver" aria-hidden="true">
+        <div class="rig__panel" data-rx><svg viewBox="0 0 160 120"><use href="#d-solar"/></svg></div>
+        <div class="rig__speaker" data-speaker><svg viewBox="0 0 120 120"><path d="M22 46h22l30-24v76L44 74H22z" fill="#e9eef8"/><path class="wave w1" d="M86 44q12 16 0 32"/><path class="wave w2" d="M96 34q22 26 0 52"/><path class="wave w3" d="M106 24q32 36 0 72"/></svg></div>
+      </div>
+    </div>
+    <div class="lab__out">
+      <p class="lab__readout" data-readout aria-live="polite">Key 1 sends “Your trunk is open.” Press it to send.</p>
+      <canvas class="scope" data-scope role="img" aria-label="Light level over time for the last key, like an oscilloscope"></canvas>
+      <div class="lab__links">
+        <button class="chip" data-mute aria-pressed="false">Sound on</button>
+        <a class="chip" href="https://github.com/AnayMehta976/ViCAS/blob/main/sender/sender.ino">Sender code</a>
+        <a class="chip" href="https://github.com/AnayMehta976/ViCAS/blob/main/lifi_sender/lifi_sender.ino">Li-Fi code</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE FRAME: scroll through eleven flashes ================= -->
+<section class="frame" id="frame" data-frame-sec>
+  <div class="frame__pin" data-frame-pin>
+    <div class="wrap frame__inner">
+      <div class="frame__copy">
+        <h2 class="h2">Every key is <em>eleven flashes.</em></h2>
+        <p class="body">In digital mode the key itself travels as data: a dark start bit, eight data bits least significant first, then the light comes back on. At 10 ms a bit, a key crosses the gap in 110 ms.</p>
+        <p class="frame__byte"><span data-frame-key>Key 1</span> <b data-frame-hex>0x31</b> <code data-frame-bin>00110001</code></p>
+      </div>
+      <div class="frame__viz">
+        <div class="frame__led" data-frame-led aria-hidden="true"></div>
+        <ol class="bits" data-bits aria-label="The eleven light states for this key"></ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY LIGHT: spectrum sweep ================= -->
+<section class="why" id="why" data-why>
+  <div class="why__pin" data-why-pin>
+    <div class="wrap why__inner">
+      <h2 class="h2">Why light, <em>not radio?</em></h2>
+      <div class="spectrum" aria-hidden="true">
+        <div class="spectrum__bar"><i class="band b-radio"><b>Radio</b></i><i class="band b-micro"><b>Microwave</b></i><i class="band b-ir"><b>Infrared</b></i><i class="band b-vis"><b>Visible</b></i><i class="band b-laser"><b>Laser</b></i></div>
+        <div class="spectrum__pointer" data-pointer></div>
+      </div>
+      <div class="verdicts">
+        <article class="verdict" data-verdict><h3>Radio</h3><p>Spreads in every direction and passes through walls, so everyone nearby can pick it up. Crowded bands mean interference, and some need a licence.</p><span class="tag tag--no">Not private</span></article>
+        <article class="verdict" data-verdict><h3>Microwave</h3><p>Travels in a line, but the equipment is costly, bulky and power-hungry for a car.</p><span class="tag tag--no">Too costly</span></article>
+        <article class="verdict" data-verdict><h3>Infrared</h3><p>Cheap and private, but short-ranged and easily blocked. It’s built for TV remotes, not traffic.</p><span class="tag tag--no">Too short</span></article>
+        <article class="verdict" data-verdict><h3>Visible light</h3><p>Reaches only the car it’s pointed at, needs no licence, adds nothing to the radio bands, and cars already carry LEDs. The whole ViCAS prototype cost ₹1,874.</p><span class="tag tag--yes">ViCAS uses this</span></article>
+        <article class="verdict" data-verdict><h3>Laser</h3><p>Very private, but a beam strong enough to reach the next car can harm eyes and heat surfaces.</p><span class="tag tag--no">Unsafe</span></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= WEATHER LAB ================= -->
+<section class="tests section" id="tests">
+  <div class="wrap tests__grid">
+    <div class="tests__head">
+      <h2 class="h2">Ten feet. <em>Fog, rain, even mud.</em></h2>
+      <p class="body">I tested the link at 0, 2, 5, 7 and 10 feet in clear air, then through steam, sprayed water and paint sprayed over part of the panel. The message played every time. Try the conditions.</p>
+      <figure class="tests__photo" data-rise><img src="img/test-beam.webp" width="526" height="720" alt="The range test: the ViCAS LED shining down a desk beside a metre rule towards the receiver" loading="lazy"><figcaption>The real range test, stepping back along a metre rule.</figcaption></figure>
+    </div>
+    <div class="weather">
+      <div class="weather__tabs" role="radiogroup" aria-label="Test condition">
+        <button class="wtab" role="radio" aria-checked="true" data-cond="clear">Clear air</button>
+        <button class="wtab" role="radio" aria-checked="false" data-cond="fog">Fog</button>
+        <button class="wtab" role="radio" aria-checked="false" data-cond="rain">Rain</button>
+        <button class="wtab" role="radio" aria-checked="false" data-cond="mud">Mud</button>
+      </div>
+      <canvas class="weather__stage" data-weather role="img" aria-label="The LED beam crossing to the solar panel under the chosen condition"></canvas>
+      <label class="range"><span>Tested distance <b data-dist>5 ft</b></span>
+        <input type="range" min="0" max="4" step="1" value="2" data-range aria-label="Tested distance between LED and solar panel" aria-valuetext="5 feet">
+      </label>
+      <p class="weather__result" data-result aria-live="polite"><span class="ok">Message played</span> at 5 ft in clear air.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RECOGNITION ================= -->
+<section class="win" id="win">
+  <div class="win__stage" data-win>
+    <div class="win__beam" aria-hidden="true"></div>
+    <p class="win__kicker">City Robotics Science Fair</p>
+    <h2 class="win__word" aria-label="Winner"><span data-win-letter>W</span><span data-win-letter>I</span><span data-win-letter>N</span><span data-win-letter>N</span><span data-win-letter>E</span><span data-win-letter>R</span></h2>
+  </div>
+  <div class="wrap win__cards">
+    <article class="wcard" data-rise><h3>Bal Vigyan 2023</h3><p>Entered in the Computer Science category with the full project file, experiments and survey.</p></article>
+    <article class="wcard" data-rise><h3>Shown at AICTSL, Indore</h3><p>Demonstrated live to the city bus control centre. The director of Chartered Speed called it “a completely new concept”.</p></article>
+    <article class="wcard" data-rise><h3>Built for the road</h3><p>Worked at every distance tested, up to 10 ft, through fog, rain and mud on the panel.</p></article>
+  </div>
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      <span>Winner, City Robotics Science Fair</span><i></i><span>Bal Vigyan 2023</span><i></i><span>Shown at AICTSL, Indore</span><i></i><span>₹1,874 in parts</span><i></i>
+      <span>Winner, City Robotics Science Fair</span><i></i><span>Bal Vigyan 2023</span><i></i><span>Shown at AICTSL, Indore</span><i></i><span>₹1,874 in parts</span><i></i>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COST ================= -->
+<section class="cost section" id="cost">
+  <div class="wrap cost__grid">
+    <div>
+      <h2 class="h2">The whole link for <span class="cost__num">₹<span data-count="1874">1,874</span></span></h2>
+      <p class="body">Every part is off the shelf. Cheap enough to fit to a car, a two-wheeler or a truck, which matters on roads like India’s.</p>
+    </div>
+    <ul class="bom" data-bom>
+      <li style="--v:700"><span>Arduino Uno R3</span><b>₹700</b><i></i></li>
+      <li style="--v:600"><span>Solar panels (4)</span><b>₹600</b><i></i></li>
+      <li style="--v:150"><span>LM386 amplifier</span><b>₹150</b><i></i></li>
+      <li style="--v:120"><span>Jumper cables</span><b>₹120</b><i></i></li>
+      <li style="--v:114"><span>Micro SD card, 2 GB</span><b>₹114</b><i></i></li>
+      <li style="--v:100"><span>Audio AUX cable</span><b>₹100</b><i></i></li>
+      <li style="--v:50"><span>4×4 keypad</span><b>₹50</b><i></i></li>
+      <li style="--v:40"><span>SD card reader</span><b>₹40</b><i></i></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= NEXT ================= -->
+<section class="next section" id="next">
+  <div class="wrap">
+    <h2 class="h2">Next, the car behind <em>answers back.</em></h2>
+    <div class="duo" aria-hidden="true">
+      <div class="duo__car duo__car--a"><i></i></div>
+      <div class="duo__road"><span class="duo__pulse duo__pulse--fwd"></span><span class="duo__pulse duo__pulse--back"></span></div>
+      <div class="duo__car duo__car--b"><i></i></div>
+    </div>
+    <ul class="future">
+      <li data-rise><h3>Two-way links</h3><p>A light and a sensor at both ends of every car.</p></li>
+      <li data-rise><h3>Headlights as the LED</h3><p>The lights cars already have become the transmitter.</p></li>
+      <li data-rise><h3>A screen for deaf drivers</h3><p>The digital mode shows each message as text.</p></li>
+      <li data-rise><h3>Priority messages</h3><p>Ambulances, police and fire engines clear the road ahead.</p></li>
+    </ul>
   </div>
 </section>
 
 </main>
 
-<!-- ============ FOOTER: the way in is the headline ============ -->
-<footer class="foot" id="contact">
-  <div class="foot__top">
-    <p><b>ViCAS</b>, the Visible Light Communication Audio System</p>
-    <p>An Arduino Li-Fi project by Anay Mehta</p>
-    <a class="textlink" href="#top">Back to top</a>
-  </div>
-  <h2 class="foot__h"><a href="https://github.com/AnayMehta976/ViCAS">github.com/ <span>AnayMehta976/ViCAS</span></a></h2>
-  <div class="foot__meta">
-    <p><a href="https://github.com/AnayMehta976/ViCAS#readme">README</a> · <a href="https://github.com/AnayMehta976/ViCAS/blob/main/LICENSE">MIT licence</a></p>
-    <p>Type: Libre Franklin and Source Serif 4, SIL Open Font Licence</p>
-    <p>Indore, 2023</p>
+<!-- ================= FOOTER ================= -->
+<footer class="foot">
+  <div class="wrap">
+    <p class="foot__by" data-rise>Designed, built and tested by</p>
+    <h2 class="foot__name" data-rise>Anay Mehta</h2>
+    <div class="foot__actions" data-rise>
+      <a class="btn" href="https://github.com/AnayMehta976/ViCAS">View the code on GitHub</a>
+      <a class="btn btn--ghost" href="#keypad">Try the keypad again</a>
+    </div>
+    <p class="foot__word" aria-hidden="true">ViCAS</p>
+    <div class="foot__meta">
+      <p>ViCAS, the Visible Light Communication Audio System. Indore.</p>
+      <p>Type: Chakra Petch, Manrope and JetBrains Mono (SIL Open Font Licence). Motion: GSAP and Lenis.</p>
+      <p><a href="https://github.com/AnayMehta976/ViCAS/blob/main/LICENSE">MIT licence</a></p>
+    </div>
   </div>
 </footer>
 
-<!-- ============ Drawings: one flat language in the palette's colours ============ -->
+<!-- ================= Drawings ================= -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <!-- 4x4 membrane keypad -->
-    <symbol id="d-keypad" viewBox="0 0 240 300">
-      <rect x="40" y="18" width="160" height="196" rx="10" fill="#1a1a1a"/>
-      <g fill="#e6e0d2">
-        <rect x="56" y="34" width="28" height="34" rx="5"/><rect x="92" y="34" width="28" height="34" rx="5"/><rect x="128" y="34" width="28" height="34" rx="5"/>
-        <rect x="56" y="78" width="28" height="34" rx="5"/><rect x="92" y="78" width="28" height="34" rx="5"/><rect x="128" y="78" width="28" height="34" rx="5"/>
-        <rect x="56" y="122" width="28" height="34" rx="5"/><rect x="92" y="122" width="28" height="34" rx="5"/><rect x="128" y="122" width="28" height="34" rx="5"/>
-        <rect x="92" y="166" width="28" height="34" rx="5"/>
-      </g>
-      <g fill="#ed4b44">
-        <rect x="164" y="34" width="28" height="34" rx="5"/><rect x="164" y="78" width="28" height="34" rx="5"/><rect x="164" y="122" width="28" height="34" rx="5"/><rect x="164" y="166" width="28" height="34" rx="5"/>
-        <rect x="56" y="166" width="28" height="34" rx="5"/><rect x="128" y="166" width="28" height="34" rx="5"/>
-      </g>
-      <rect x="96" y="214" width="48" height="40" fill="#e6e0d2"/>
-      <g fill="#1a1a1a"><rect x="100" y="254" width="4" height="34"/><rect x="108" y="254" width="4" height="34"/><rect x="116" y="254" width="4" height="34"/><rect x="124" y="254" width="4" height="34"/><rect x="132" y="254" width="4" height="34"/><rect x="140" y="254" width="4" height="34"/></g>
+    <symbol id="d-keypad" viewBox="0 0 200 220">
+      <rect x="30" y="10" width="140" height="170" rx="12" fill="#151d2c" stroke="#2c3a52"/>
+      <g fill="#e9eef8"><rect x="44" y="24" width="24" height="30" rx="5"/><rect x="76" y="24" width="24" height="30" rx="5"/><rect x="108" y="24" width="24" height="30" rx="5"/><rect x="44" y="62" width="24" height="30" rx="5"/><rect x="76" y="62" width="24" height="30" rx="5"/><rect x="108" y="62" width="24" height="30" rx="5"/><rect x="44" y="100" width="24" height="30" rx="5"/><rect x="76" y="100" width="24" height="30" rx="5"/><rect x="108" y="100" width="24" height="30" rx="5"/><rect x="76" y="138" width="24" height="30" rx="5"/></g>
+      <g fill="#ffb22e"><rect x="140" y="24" width="24" height="30" rx="5"/><rect x="140" y="62" width="24" height="30" rx="5"/><rect x="140" y="100" width="24" height="30" rx="5"/><rect x="140" y="138" width="24" height="30" rx="5"/><rect x="44" y="138" width="24" height="30" rx="5"/><rect x="108" y="138" width="24" height="30" rx="5"/></g>
+      <rect x="80" y="180" width="40" height="18" fill="#e9eef8"/>
+      <g fill="#5c6b85"><rect x="84" y="198" width="3" height="18"/><rect x="91" y="198" width="3" height="18"/><rect x="98" y="198" width="3" height="18"/><rect x="105" y="198" width="3" height="18"/><rect x="112" y="198" width="3" height="18"/></g>
     </symbol>
-    <!-- straw-hat white LED with its beam -->
-    <symbol id="d-led" viewBox="0 0 240 300">
-      <path d="M120 120 L20 10 L220 10 Z" fill="#e6e0d2" opacity=".55"/>
-      <path d="M84 196 V150 a36 36 0 0 1 72 0 V196 Z" fill="#e6e0d2"/>
-      <rect x="76" y="192" width="88" height="14" rx="3" fill="#e6e0d2"/>
-      <path d="M104 172 h32 v20 h-32 Z" fill="#1a1a1a" opacity=".18"/>
-      <rect x="100" y="206" width="8" height="84" fill="#1a1a1a"/>
-      <rect x="132" y="206" width="8" height="64" fill="#1a1a1a"/>
+    <symbol id="d-led" viewBox="0 0 200 220">
+      <path d="M100 96 L10 6 L190 6 Z" fill="#9fdcff" opacity=".22"/>
+      <circle cx="100" cy="110" r="56" fill="#f3f8ff" opacity=".14"/>
+      <path d="M72 150 V112 a28 28 0 0 1 56 0 V150 Z" fill="#f3f8ff"/>
+      <rect x="64" y="148" width="72" height="12" rx="3" fill="#f3f8ff"/>
+      <rect x="86" y="160" width="6" height="56" fill="#5c6b85"/><rect x="108" y="160" width="6" height="42" fill="#5c6b85"/>
     </symbol>
-    <!-- small solar panel, 4x3 cells -->
-    <symbol id="d-solar" viewBox="0 0 240 300">
-      <rect x="26" y="56" width="188" height="188" fill="#1a1a1a"/>
-      <g fill="#24324a">
-        <rect x="34" y="64" width="40" height="54"/><rect x="80" y="64" width="40" height="54"/><rect x="126" y="64" width="40" height="54"/><rect x="172" y="64" width="34" height="54"/>
-        <rect x="34" y="124" width="40" height="54"/><rect x="80" y="124" width="40" height="54"/><rect x="126" y="124" width="40" height="54"/><rect x="172" y="124" width="34" height="54"/>
-        <rect x="34" y="184" width="40" height="52"/><rect x="80" y="184" width="40" height="52"/><rect x="126" y="184" width="40" height="52"/><rect x="172" y="184" width="34" height="52"/>
-      </g>
-      <g fill="#e6e0d2"><rect x="34" y="88" width="172" height="3"/><rect x="34" y="148" width="172" height="3"/><rect x="34" y="208" width="172" height="3"/></g>
-      <rect x="196" y="244" width="6" height="40" fill="#1a1a1a"/><rect x="38" y="244" width="6" height="30" fill="#ed4b44"/>
-    </symbol>
-    <!-- Arduino Uno board -->
-    <symbol id="d-arduino" viewBox="0 0 480 300">
-      <path d="M70 40 H400 L420 60 V240 L400 260 H70 Z" fill="#14709a"/>
-      <rect x="40" y="70" width="76" height="62" fill="#e6e0d2"/>
-      <rect x="44" y="176" width="58" height="52" rx="6" fill="#1a1a1a"/>
-      <rect x="146" y="48" width="236" height="20" fill="#1a1a1a"/>
-      <rect x="196" y="232" width="190" height="20" fill="#1a1a1a"/>
-      <rect x="200" y="140" width="176" height="40" rx="3" fill="#1a1a1a"/>
-      <g fill="#e6e0d2"><circle cx="160" cy="210" r="14"/><circle cx="160" cy="210" r="14" fill="#e6e0d2"/><rect x="140" y="100" width="34" height="18" rx="3"/></g>
-      <circle cx="400" cy="210" r="10" fill="#e6e0d2"/><circle cx="84" cy="246" r="8" fill="#e6e0d2"/>
-      <rect x="306" y="94" width="40" height="24" fill="#ed4b44"/>
-    </symbol>
-    <!-- car tail light cluster -->
-    <symbol id="d-taillight" viewBox="0 0 240 300">
-      <path d="M30 70 H190 Q214 70 214 96 V206 Q214 232 188 232 H52 Q30 232 30 210 Z" fill="#1a1a1a"/>
-      <path d="M46 86 H186 Q198 86 198 100 V150 H46 Z" fill="#ed4b44"/>
-      <path d="M46 160 H198 V200 Q198 216 182 216 H62 Q46 216 46 200 Z" fill="#e6e0d2"/>
-      <g fill="#1a1a1a" opacity=".25"><rect x="80" y="86" width="6" height="64"/><rect x="120" y="86" width="6" height="64"/><rect x="160" y="86" width="6" height="64"/></g>
-    </symbol>
-    <!-- 3.5 mm jack -->
-    <symbol id="d-jack" viewBox="0 0 240 300">
-      <rect x="104" y="24" width="32" height="70" rx="2" fill="#e6e0d2"/>
-      <g fill="#1a1a1a"><rect x="104" y="44" width="32" height="5"/><rect x="104" y="62" width="32" height="5"/></g>
-      <path d="M104 24 a16 16 0 0 1 32 0 Z" fill="#e6e0d2"/>
-      <rect x="92" y="94" width="56" height="118" rx="8" fill="#1a1a1a"/>
-      <rect x="112" y="212" width="16" height="78" fill="#1a1a1a"/>
+    <symbol id="d-solar" viewBox="0 0 160 120">
+      <rect x="8" y="8" width="144" height="104" rx="4" fill="#0d1d3c" stroke="#5ce1ff" stroke-opacity=".6"/>
+      <g stroke="#3d6fb3" stroke-width="1.5"><path d="M44 8v104M80 8v104M116 8v104M8 42h144M8 78h144"/></g>
     </symbol>
   </defs>
 </svg>
 
+<script src="vendor/gsap.min.js" defer></script>
+<script src="vendor/ScrollTrigger.min.js" defer></script>
+<script src="vendor/lenis.min.js" defer></script>
 <script src="main.js" defer></script>
 </body>
 </html>
